@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+
+# Build output
+dist/
+.output/
+
+# Tool folders
+.tanstack/
+.lovable/
+.wrangler/
+
+# Logs
+*.log
+.DS_Store
