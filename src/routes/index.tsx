@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
   Award,
@@ -163,7 +163,12 @@ function CategoryGrid() {
 }
 
 function HomepageFeaturedProducts() {
-  const { data: featured } = useSuspenseQuery(homepageFeaturedProductsQuery);
+  const { data: featured = [], error } = useQuery(homepageFeaturedProductsQuery);
+
+  if (error) {
+    console.warn("Homepage featured products unavailable", error);
+  }
+
   if (!featured.length) return null;
 
   return (

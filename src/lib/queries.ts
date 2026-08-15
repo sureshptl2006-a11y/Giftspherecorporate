@@ -1,6 +1,18 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+const isMissingColumnError = (error: unknown) => {
+  const message = String((error as any)?.message ?? "");
+  const code = (error as any)?.code;
+
+  return (
+    code === "42703" ||
+    /Could not find the '.*' column/.test(message) ||
+    /column .* does not exist/i.test(message) ||
+    /does not exist/i.test(message)
+  );
+};
+
 export const categoriesQuery = queryOptions({
   queryKey: ["categories"],
   queryFn: async () => {
@@ -61,16 +73,18 @@ export const homepageFeaturedProductsQuery = queryOptions({
   queryFn: async () => {
     const { data, error } = await supabase
       .from("products")
-      .select("*, category:categories(*)")
+      .select("id, name, slug, description, moq, image_url, image_urls, active, category:categories(*)")
       .eq("active", true)
       .order("display_order");
+
     if (error) {
-      if ((error as any).code === "42703" || /Could not find the 'featured_homepage' column/.test(String(error.message))) {
-        console.warn("Supabase schema cache missing featured_homepage; homepage featured products disabled.");
+      if (isMissingColumnError(error)) {
+        console.warn("Supabase schema does not expose homepage featured products yet; disabling that section.");
         return [];
       }
       throw error;
     }
+
     return (data ?? []).filter((product: any) => product.featured_homepage === true);
   },
 });
