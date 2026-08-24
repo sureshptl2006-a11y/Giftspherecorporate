@@ -45,13 +45,29 @@ function AuthPage() {
   async function signIn(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    const email = String(fd.get("email") ?? "").trim().toLowerCase();
+    const password = String(fd.get("password") ?? "");
+
+    if (!email || !password) {
+      toast.error("Enter your email and password.");
+      return;
+    }
+
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
-      email: String(fd.get("email")), password: String(fd.get("password")),
+      email,
+      password,
     });
     if (error) {
       setLoading(false);
-      toast.error(error.message);
+      const message = error.message.toLowerCase();
+      if (message.includes("email not confirmed")) {
+        toast.error("Confirm your email in Supabase before signing in.");
+      } else if (message.includes("invalid login credentials")) {
+        toast.error("Incorrect email or password. Use First-time setup if you have not registered yet.");
+      } else {
+        toast.error(`Sign-in failed: ${error.message}`);
+      }
       return;
     }
 
