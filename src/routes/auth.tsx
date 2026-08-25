@@ -1,10 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useServerFn } from "@tanstack/react-start";
 import { Lock, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { claimFirstAdmin } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +20,6 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const claim = useServerFn(claimFirstAdmin);
   const [loading, setLoading] = useState(false);
   const [checked, setChecked] = useState(false);
 
@@ -73,18 +70,7 @@ function AuthPage() {
 
     const session = await ensureAuthSession();
     if (session) {
-      try {
-        const r = await claim({});
-        if (r.ok) {
-          toast.success("Welcome — admin account created.");
-        } else {
-          toast.message("Sign-in successful. Admin claim was not executed.");
-          console.warn("claimFirstAdmin returned ok=false during sign in", r.reason);
-        }
-      } catch (err) {
-        console.error("Admin claim failed after sign in:", err);
-        toast.error("Sign-in succeeded but admin claim failed. Check console for details.");
-      }
+      await claimFirstAdminRole();
     }
 
     setLoading(false);
@@ -109,17 +95,7 @@ function AuthPage() {
     if (data?.session) {
       const session = await ensureAuthSession();
       if (session) {
-        try {
-          const r = await claim({});
-          if (r.ok) toast.success("Welcome — admin account created.");
-          else {
-            toast.message("Account created. An existing admin must grant access.");
-            console.warn("claimFirstAdmin returned ok=false after signup", r);
-          }
-        } catch (err) {
-          console.error("Admin claim failed after signup:", err);
-          toast.error("Account created, but initial admin claim failed. Please sign in again.");
-        }
+        await claimFirstAdminRole();
       } else {
         toast.success("Account created. Please confirm your email before signing in.");
       }
@@ -192,4 +168,12 @@ function AuthPage() {
       </div>
     </section>
   );
+}
+
+async function claimFirstAdminRole() {
+  const { error } = await (supabase as any).rpc("claim_first_admin");
+  if (error && !/admin already exists/i.test(error.message)) {
+    console.error("Admin claim failed:", error.message);
+    toast.message("Account created. An existing admin must grant access.");
+  }
 }

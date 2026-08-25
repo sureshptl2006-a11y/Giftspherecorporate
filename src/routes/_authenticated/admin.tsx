@@ -1,10 +1,8 @@
 import { createFileRoute, Link, useNavigate, Outlet } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { LogOut, LayoutDashboard, Inbox, Package, FileText, MessageSquare, Image as ImageIcon, Star, Layers, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { claimFirstAdmin } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -27,7 +25,6 @@ function AdminLayout() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [email, setEmail] = useState("");
-  const claim = useServerFn(claimFirstAdmin);
 
   const { data: isAdmin, isLoading } = useQuery({
     queryKey: ["is-admin"],
@@ -44,12 +41,7 @@ function AdminLayout() {
       }
 
       if (!data) {
-        const r = await claim({});
-        if (r.ok) {
-          qc.invalidateQueries({ queryKey: ["is-admin"] });
-          return true;
-        }
-        if (r.reason === "claim_failed") console.error("Initial admin claim failed in admin layout:", r.message);
+        return false;
       }
 
       return !!data;
