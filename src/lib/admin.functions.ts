@@ -9,24 +9,32 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const claimFirstAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { count, error: countErr } = await supabaseAdmin
-      .from("user_roles")
-      .select("*", { count: "exact", head: true })
-      .eq("role", "admin");
-    if (countErr) throw new Error(countErr.message);
+      const { count, error: countErr } = await supabaseAdmin
+        .from("user_roles")
+        .select("*", { count: "exact", head: true })
+        .eq("role", "admin");
+      if (countErr) return { ok: false as const, reason: "claim_failed" as const, message: countErr.message };
 
-    if ((count ?? 0) > 0) {
-      return { ok: false as const, reason: "admin_exists" as const };
+      if ((count ?? 0) > 0) {
+        return { ok: false as const, reason: "admin_exists" as const };
+      }
+
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .insert({ user_id: context.userId, role: "admin" });
+      if (error) return { ok: false as const, reason: "claim_failed" as const, message: error.message };
+
+      return { ok: true as const };
+    } catch (error) {
+      return {
+        ok: false as const,
+        reason: "claim_failed" as const,
+        message: error instanceof Error ? error.message : "Admin claim failed",
+      };
     }
-
-    const { error } = await supabaseAdmin
-      .from("user_roles")
-      .insert({ user_id: context.userId, role: "admin" });
-    if (error) throw new Error(error.message);
-
-    return { ok: true as const };
   });
 
 export const checkIsAdmin = createServerFn({ method: "POST" })

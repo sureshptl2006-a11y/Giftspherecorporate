@@ -44,15 +44,12 @@ function AdminLayout() {
       }
 
       if (!data) {
-        try {
-          const r = await claim({});
-          if (r.ok) {
-            qc.invalidateQueries({ queryKey: ["is-admin"] });
-            return true;
-          }
-        } catch (err) {
-          console.error("Initial admin claim failed in admin layout:", err);
+        const r = await claim({});
+        if (r.ok) {
+          qc.invalidateQueries({ queryKey: ["is-admin"] });
+          return true;
         }
+        if (r.reason === "claim_failed") console.error("Initial admin claim failed in admin layout:", r.message);
       }
 
       return !!data;

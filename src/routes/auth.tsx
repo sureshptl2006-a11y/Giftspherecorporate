@@ -79,7 +79,7 @@ function AuthPage() {
           toast.success("Welcome — admin account created.");
         } else {
           toast.message("Sign-in successful. Admin claim was not executed.");
-          console.warn("claimFirstAdmin returned ok=false during sign in", r);
+          console.warn("claimFirstAdmin returned ok=false during sign in", r.reason);
         }
       } catch (err) {
         console.error("Admin claim failed after sign in:", err);
