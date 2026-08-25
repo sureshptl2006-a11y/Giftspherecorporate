@@ -40,6 +40,7 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  const isSupabaseAuthError = /invalid api key|invalid supabase url|unauthorized/i.test(error.message);
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
@@ -48,7 +49,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
       <div className="max-w-md text-center">
         <h1 className="font-display text-3xl">Something went wrong</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Please try again. If the problem continues, get in touch.
+          {isSupabaseAuthError
+            ? "The site database is not configured correctly. Please contact the site administrator."
+            : "Please try again. If the problem continues, get in touch."}
         </p>
         <div className="mt-6 flex justify-center gap-3">
           <button
