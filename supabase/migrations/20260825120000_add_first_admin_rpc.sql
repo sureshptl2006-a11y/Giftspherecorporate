@@ -8,9 +8,14 @@ SET search_path = public
 AS $$
 DECLARE
   current_user_id uuid := auth.uid();
+  current_email text := lower(coalesce(auth.jwt() ->> 'email', ''));
 BEGIN
   IF current_user_id IS NULL THEN
     RAISE EXCEPTION 'Authentication required';
+  END IF;
+
+  IF current_email <> 'sureshptl2006@gmail.com' THEN
+    RETURN false;
   END IF;
 
   -- Prevent two first users from both passing the count check concurrently.
